@@ -8,6 +8,12 @@ client.on("ready", () => {
     console.log("I am ready!");
 });
 
+const quotePreMessage = [
+    'has been known to say:',
+    'has once sad:',
+    'believes:',
+    'has the unpopular opinion that:'
+];
 
 
 client.on("message", (message) => {
@@ -15,7 +21,7 @@ client.on("message", (message) => {
     //Logs messages in chat.
     if (!message.content.startsWith(config.prefix) && !message.author.bot) {
         let logEntry = {
-            "Author": message.author.username,
+            "author": message.author.username,
             "content": message.content.slice(),
             "createdAt": message.createdAt,
             "timestamp": message.createdTimestamp,
@@ -45,38 +51,63 @@ client.on("message", (message) => {
         }
 
     } else if (message.content.startsWith(config.prefix + "stop") && message.author.id == config.owner) {
-        
+
         //Disconnects the Bot.
         client.destroy();
 
     } else if (message.content.startsWith(config.prefix + "quote")) {
 
         let name = message.content.split(" ").slice(1, 2)[0] || null;
-        let quote = getRandomQuote(name);
+        let PreMessage = quotePreMessage[quotePreMessage.length];
+
+        var promise1 = new Promise(function(resolve, reject){
+            resolve(getRandomQuote(name));
+        });
+
+        promise1.then(function(quote){
+            message.channel.send(quote);
+            //message.channel.send(`${quote.Author} ${PreMessage} \n "${quote}"`);
+        });
+
     }
 
 });
 
 
 function getRandomQuote(name) {
-    fs.readFile('./log.json', function(err,data){
-        if(err){console.error(err);}
+    fs.readFile('./log.json', function (err, data) {
+        if (err) {
+            console.error(err);
+        }
         const parsedData = JSON.parse(data);
+        var quotes;
 
-        if(name){
-            const filteredByAuthor = parsedData.filter((entry)=>{
+        if (name) {
+            const filteredByAuthor = parsedData.filter((entry) => {
                 return entry.Author === name;
             });
-            console.log(filteredByAuthor);
-        }else{
-            console.log(parsedData);
+            //console.log(filteredByAuthor);
+            quotes = filteredByAuthor;
+        } else {
+            //console.log(parsedData);
+            quotes = parsedData;
         }
+
+        if (quotes) {
+            return quotes[getRandomInt(quotes.length)];
+        }else{
+            console.log(parsedData[getRandomInt(parsedData.length)]);
+            return parsedData[getRandomInt(parsedData.length)];            
+        }
+
     });
 }
 
-function readAndAppendLog(entry){
-    fs.readFile('./log.json', function(err,data){
-        if(err){console.error(err);}
+function readAndAppendLog(entry) {
+    fs.readFile('./log.json', function (err, data) {
+        if (err) {
+            console.error(err);
+        }
         // parse log
         const parsedData = JSON.parse(data);
 
@@ -89,6 +120,10 @@ function readAndAppendLog(entry){
         // Write to log file.
         fs.writeFile("./log.json", appendedLog, (err) => console.error);
     });
+}
+
+function getRandomInt(max) {
+    return Math.floor(Math.random() * Math.floor(max));
 }
 
 
