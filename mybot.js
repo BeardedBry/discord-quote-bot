@@ -58,47 +58,42 @@ client.on("message", (message) => {
     } else if (message.content.startsWith(config.prefix + "quote")) {
 
         let name = message.content.split(" ").slice(1, 2)[0] || null;
-        let PreMessage = quotePreMessage[quotePreMessage.length];
+        let preMessage = quotePreMessage[getRandomInt(quotePreMessage.length)];
 
-        var promise1 = new Promise(function(resolve, reject){
-            resolve(getRandomQuote(name));
-        });
+        try {
+            getRandomQuoteAndSend(preMessage, name, sendMessage);
+        } catch (error) {
+            console.log('error: maybe no quotes available?')
+        }
+   
+    }
 
-        promise1.then(function(quote){
-            message.channel.send(quote);
-            //message.channel.send(`${quote.Author} ${PreMessage} \n "${quote}"`);
-        });
-
+    function sendMessage(msg){
+        message.channel.send(msg);
     }
 
 });
 
 
-function getRandomQuote(name) {
+function getRandomQuoteAndSend(pre, name, cb) {
     fs.readFile('./log.json', function (err, data) {
         if (err) {
             console.error(err);
         }
         const parsedData = JSON.parse(data);
+        var filteredByAuthor = [];
         var quotes;
 
         if (name) {
-            const filteredByAuthor = parsedData.filter((entry) => {
-                return entry.Author === name;
+            filteredByAuthor = parsedData.filter((entry) => {
+                return entry.author === name;
             });
-            //console.log(filteredByAuthor);
-            quotes = filteredByAuthor;
-        } else {
-            //console.log(parsedData);
-            quotes = parsedData;
         }
 
-        if (quotes) {
-            return quotes[getRandomInt(quotes.length)];
-        }else{
-            console.log(parsedData[getRandomInt(parsedData.length)]);
-            return parsedData[getRandomInt(parsedData.length)];            
-        }
+        quotes = filteredByAuthor.length > 0 ? filteredByAuthor : parsedData;
+
+        let quote = quotes[getRandomInt(quotes.length)];
+        cb(`${quote.author} ${pre} \n "${quote.content}"`);        
 
     });
 }
