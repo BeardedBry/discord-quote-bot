@@ -1,5 +1,6 @@
 const config = require("./config.json");
 const log = require("./log.json");
+const logger = require("./logger.js");
 const Discord = require("discord.js");
 const client = new Discord.Client();
 const fs = require("fs");
@@ -20,15 +21,12 @@ client.on("message", (message) => {
 
     //Logs messages in chat.
     if (!message.content.startsWith(config.prefix) && !message.author.bot) {
-        let logEntry = {
-            "author": message.author.username,
-            "content": message.content.slice(),
-            "createdAt": message.createdAt,
-            "timestamp": message.createdTimestamp,
-        }
+        
+        const logEntry = logger.createEntry(message);
+        const log = logger.readLog();
+        log.push(logEntry);
+        logger.saveLog(log);
 
-        //let entryJSON = JSON.stringify(logEntry);
-        readAndAppendLog(logEntry);
 
     } else if (message.content.startsWith(config.prefix + "prefix")) {
 
@@ -98,24 +96,6 @@ function getRandomQuoteAndSend(pre, name, cb) {
     });
 }
 
-function readAndAppendLog(entry) {
-    fs.readFile('./log.json', function (err, data) {
-        if (err) {
-            console.error(err);
-        }
-        // parse log
-        const parsedData = JSON.parse(data);
-
-        // append new data on to parsed log
-        parsedData.push(entry);
-
-        // stringify appended log.
-        const appendedLog = JSON.stringify(parsedData);
-
-        // Write to log file.
-        fs.writeFile("./log.json", appendedLog, (err) => console.error);
-    });
-}
 
 function getRandomInt(max) {
     return Math.floor(Math.random() * Math.floor(max));
